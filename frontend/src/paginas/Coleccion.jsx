@@ -13,6 +13,9 @@ import estilos from "./Coleccion.module.css";
 // Debe coincidir con FOLIO_TAMANO_MAXIMO_MB del backend. Revisarlo aquí
 // solo sirve para avisar al instante; el backend vuelve a validar siempre.
 const LIMITE_MB = 25;
+// Cada cuánto preguntamos por los documentos que se están procesando
+const INTERVALO_MS = 3000;
+const EN_CURSO = ["pendiente", "procesando"];
 
 function validarAntesDeSubir(archivo) {
   if (!archivo.name.toLowerCase().endsWith(".pdf")) return "Solo se aceptan archivos PDF.";
@@ -32,6 +35,7 @@ export default function Coleccion() {
   const [editando, setEditando] = useState(false);
   const [subidas, setSubidas] = useState([]);
   const [abriendo, setAbriendo] = useState(null);
+  const [reintentando, setReintentando] = useState(null);
   // Qué se está por borrar: { tipo: "coleccion" } o { tipo: "documento", documento }
   const [porBorrar, setPorBorrar] = useState(null);
   const [borrando, setBorrando] = useState(false);
@@ -40,6 +44,12 @@ export default function Coleccion() {
   // Cadena de promesas: cada subida espera a que termine la anterior,
   // así los archivos se suben de uno en uno y en orden.
   const colaSubidas = useRef(Promise.resolve());
+  // Copia de la lista que el temporizador puede leer sin quedarse con una
+  // versión vieja (las funciones "recuerdan" los valores de cuando se crearon)
+  const documentosActuales = useRef(documentos);
+  useEffect(() => {
+    documentosActuales.current = documentos;
+  }, [documentos]);
 
   // Cuando cambia el id de la URL, cargamos la colección y sus documentos
   // en paralelo (Promise.all espera a las dos peticiones).
@@ -63,6 +73,53 @@ export default function Coleccion() {
       vigente = false;
     };
   }, [id]);
+
+  // ---------- Seguimiento del procesamiento (polling) ----------
+  // Mientras haya documentos pendientes o procesándose, preguntamos al
+  // backend cada 3 segundos. Cuando ya no hay, el efecto se limpia solo:
+  // hayEnCurso pasa a false y React ejecuta la función de limpieza.
+  const hayEnCurso = documentos.some((documento) => EN_CURSO.includes(documento.estado));
+
+  useEffect(() => {
+    if (!hayEnCurso) return;
+
+    const temporizador = setInterval(async () => {
+      let frescos;
+      try {
+        frescos = await apiDocumentos.listar(id);
+      } catch {
+        return; // sin conexión por un momento: lo intentamos en la siguiente vuelta
+      }
+
+      const estadosAntes = new Map(documentosActuales.current.map((d) => [d.id, d.estado]));
+      for (const documento of frescos) {
+        if (!EN_CURSO.includes(estadosAntes.get(documento.id))) continue;
+        if (documento.estado === "listo") avisar(`«${documento.nombre_original}» está listo.`);
+        if (documento.estado === "error") avisar(`«${documento.nombre_original}» no se pudo procesar.`, "error");
+      }
+
+      setDocumentos((actuales) => {
+        // Conservamos los que se subieron mientras esta consulta viajaba
+        const idMaximo = Math.max(0, ...frescos.map((d) => d.id));
+        const recienSubidos = actuales.filter((d) => d.id > idMaximo);
+        return [...recienSubidos, ...frescos];
+      });
+    }, INTERVALO_MS);
+
+    return () => clearInterval(temporizador);
+  }, [hayEnCurso, id, avisar]);
+
+  async function reintentar(documento) {
+    setReintentando(documento.id);
+    try {
+      const actualizado = await apiDocumentos.reprocesar(documento.id);
+      setDocumentos((actuales) => actuales.map((d) => (d.id === actualizado.id ? actualizado : d)));
+    } catch (error) {
+      avisar(mensajeDeError(error), "error");
+    } finally {
+      setReintentando(null);
+    }
+  }
 
   // ---------- Subidas ----------
   function actualizarSubida(idSubida, cambios) {
@@ -220,7 +277,9 @@ export default function Coleccion() {
           <TablaDocumentos
             documentos={documentos}
             abriendo={abriendo}
+            reintentando={reintentando}
             onAbrir={abrir}
+            onReintentar={reintentar}
             onBorrar={(documento) => setPorBorrar({ tipo: "documento", documento })}
           />
         ) : (

@@ -55,6 +55,10 @@ class Documento(models.Model):
     tamano_bytes = models.PositiveBigIntegerField()
     num_paginas = models.PositiveIntegerField()
     estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.PENDIENTE)
+    # Si el procesamiento falla, aquí va el motivo en palabras del usuario
+    mensaje_error = models.TextField(blank=True)
+    # Páginas sin texto legible (por ejemplo, imágenes escaneadas)
+    paginas_sin_texto = models.JSONField(default=list, blank=True)
     subido = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "cuentas",
     "biblioteca",
+    "procesamiento",
 ]
 
 MIDDLEWARE = [
@@ -146,3 +147,36 @@ JWT_COOKIE_SEGURA = variable_booleana("JWT_COOKIE_SEGURA")
 # --- Límites de Folio ---
 FOLIO_TAMANO_MAXIMO_PDF = int(variable_entorno("FOLIO_TAMANO_MAXIMO_MB", "25")) * 1024 * 1024
 FOLIO_MAX_DOCUMENTOS_POR_USUARIO = int(variable_entorno("FOLIO_MAX_DOCUMENTOS_POR_USUARIO", "50"))
+
+
+# --- Celery (tareas en segundo plano) ---
+CELERY_BROKER_URL = variable_entorno("CELERY_BROKER_URL", "redis://localhost:6379/0")
+# No guardamos resultados: el estado de cada documento ya vive en la base
+CELERY_TASK_IGNORE_RESULT = True
+# Si el worker muere a mitad de una tarea, la tarea vuelve a la cola
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+# Cada worker toma un encargo a la vez (las tareas son largas)
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+
+# --- Procesamiento de PDFs ---
+GEMINI_API_KEY = variable_entorno("GEMINI_API_KEY", "")
+FOLIO_EMBEDDINGS_MODELO = variable_entorno("FOLIO_EMBEDDINGS_MODELO", "gemini-embedding-001")
+FOLIO_FRAGMENTO_TAMANO = int(variable_entorno("FOLIO_FRAGMENTO_TAMANO", "1200"))
+FOLIO_FRAGMENTO_SOLAPE = int(variable_entorno("FOLIO_FRAGMENTO_SOLAPE", "200"))
+
+
+# --- Registros (logs) ---
+# Los errores del procesamiento se ven con: docker compose logs worker
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"consola": {"class": "logging.StreamHandler"}},
+    "loggers": {
+        "procesamiento": {"handlers": ["consola"], "level": "INFO"},
+        # pypdf avisa de detalles menores de PDFs mal formados; no son errores nuestros
+        "pypdf": {"handlers": ["consola"], "level": "ERROR", "propagate": False},
+    },
+}

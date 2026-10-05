@@ -8,9 +8,12 @@ from django.db.models import Count, Prefetch, Sum
 from django.db.models.functions import Coalesce
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, mixins, viewsets
+from rest_framework import generics, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
+from rest_framework.response import Response
+
+from procesamiento.tasks import encolar_procesamiento
 
 from .models import Coleccion, Documento
 from .serializers import ColeccionSerializer, DocumentoSerializer, SubidaDocumentoSerializer
@@ -60,6 +63,11 @@ class DocumentosDeColeccionVista(generics.ListCreateAPIView):
             contexto["coleccion"] = self.get_coleccion()
         return contexto
 
+    def perform_create(self, serializer):
+        documento = serializer.save()
+        # El procesamiento corre en segundo plano: la respuesta sale ya
+        encolar_procesamiento(documento)
+
 
 class DocumentoViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     """Ver, borrar y descargar un documento propio."""
@@ -68,6 +76,20 @@ class DocumentoViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, view
 
     def get_queryset(self):
         return Documento.objects.filter(coleccion__propietario=self.request.user)
+
+    @action(detail=True, methods=["post"])
+    def reprocesar(self, request, pk=None):
+        """Vuelve a poner en la cola un documento (por ejemplo, tras un error)."""
+        documento = self.get_object()
+        if documento.estado == Documento.Estado.PROCESANDO:
+            return Response(
+                {"detail": "El documento ya se está procesando."}, status=status.HTTP_409_CONFLICT
+            )
+        documento.estado = Documento.Estado.PENDIENTE
+        documento.mensaje_error = ""
+        documento.save(update_fields=["estado", "mensaje_error"])
+        encolar_procesamiento(documento)
+        return Response(DocumentoSerializer(documento).data, status=status.HTTP_202_ACCEPTED)
 
     @action(detail=True, methods=["get"])
     def archivo(self, request, pk=None):

@@ -9,6 +9,20 @@ export function formatoFechaCorta(textoIso) {
   return formatoFecha.format(new Date(textoIso)).replace(".", "");
 }
 
+/*
+  Agrupa números de página consecutivos en rangos:
+  [1, 2, 3, 7, 9, 10] -> "1–3, 7, 9–10"
+*/
+export function formatoRangos(paginas) {
+  const rangos = [];
+  for (const pagina of paginas) {
+    const ultimo = rangos.at(-1);
+    if (ultimo && pagina === ultimo[1] + 1) ultimo[1] = pagina;
+    else rangos.push([pagina, pagina]);
+  }
+  return rangos.map(([desde, hasta]) => (desde === hasta ? `${desde}` : `${desde}–${hasta}`)).join(", ");
+}
+
 export function plural(cantidad, singular, pluralTexto = `${singular}s`) {
   return `${cantidad} ${cantidad === 1 ? singular : pluralTexto}`;
 }

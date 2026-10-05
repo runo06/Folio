@@ -44,8 +44,8 @@ class DocumentoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Documento
         fields = [
-            "id", "coleccion", "nombre_original", "tamano_bytes",
-            "num_paginas", "estado", "subido", "url_archivo",
+            "id", "coleccion", "nombre_original", "tamano_bytes", "num_paginas",
+            "estado", "mensaje_error", "paginas_sin_texto", "subido", "url_archivo",
         ]
         read_only_fields = fields
 

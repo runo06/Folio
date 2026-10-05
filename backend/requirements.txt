@@ -4,3 +4,8 @@ djangorestframework-simplejwt>=5.5,<6
 psycopg[binary]>=3.2,<4
 pypdf>=6,<7
 cryptography>=44
+celery[redis]>=5.5,<6
+google-genai>=2.28,<3
+pgvector>=0.4,<1
+# Solo para pruebas: genera PDFs con texto
+fpdf2>=2.8,<3

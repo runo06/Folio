@@ -18,12 +18,22 @@ services:
       timeout: 5s
       retries: 10
 
+  # Cola de tareas: Django deja encargos aquí y el worker los recoge
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   # API de Django
   backend:
     build: ./backend
     env_file: .env
     environment:
       POSTGRES_HOST: db # dentro de la red de Docker, la base se llama "db"
+      CELERY_BROKER_URL: redis://redis:6379/0
     volumes:
       - ./backend:/app # tu código, montado: los cambios se ven al instante
       - archivos_subidos:/app/media # los PDF viven en un volumen aparte
@@ -32,9 +42,32 @@ services:
     depends_on:
       db:
         condition: service_healthy # espera a que PostgreSQL acepte conexiones
+      redis:
+        condition: service_healthy
     command: >
       sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
+
+  # Worker de Celery: MISMA imagen y código que el backend, pero en vez de
+  # atender peticiones web, procesa los PDF en segundo plano.
+  # Ojo: no se recarga solo al editar código; usa "docker compose restart worker".
+  worker:
+    build: ./backend
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - archivos_subidos:/app/media # necesita leer los mismos PDF
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started # el backend aplica las migraciones
+    command: celery -A config worker --loglevel=info --concurrency=2
 
   # Interfaz en React, servida por Vite en modo desarrollo
   frontend:

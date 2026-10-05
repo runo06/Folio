@@ -1,8 +1,24 @@
-import { formatoFechaCorta, formatoTamano } from "../utilidades/formato";
+import { formatoFechaCorta, formatoRangos, formatoTamano } from "../utilidades/formato";
 import EstadoDocumento from "./EstadoDocumento";
 import estilos from "./TablaDocumentos.module.css";
 
-export default function TablaDocumentos({ documentos, abriendo, onAbrir, onBorrar }) {
+// Una línea bajo el nombre: por qué falló, o qué páginas no tenían texto
+function Detalle({ documento }) {
+  if (documento.estado === "error" && documento.mensaje_error) {
+    return <span className={`${estilos.detalle} ${estilos.detalleError}`}>{documento.mensaje_error}</span>;
+  }
+  const sinTexto = documento.paginas_sin_texto ?? [];
+  if (documento.estado === "listo" && sinTexto.length) {
+    const texto =
+      sinTexto.length > 12
+        ? `${sinTexto.length} páginas sin texto legible`
+        : `Sin texto legible en ${sinTexto.length === 1 ? "la pág." : "las págs."} ${formatoRangos(sinTexto)}`;
+    return <span className={estilos.detalle}>{texto}</span>;
+  }
+  return null;
+}
+
+export default function TablaDocumentos({ documentos, abriendo, reintentando, onAbrir, onReintentar, onBorrar }) {
   return (
     <div className={estilos.marco}>
       <table className={estilos.tabla}>
@@ -26,7 +42,12 @@ export default function TablaDocumentos({ documentos, abriendo, onAbrir, onBorra
               <td className={estilos.celdaNombre}>
                 <div className={estilos.nombre}>
                   <i className={estilos.icono} aria-hidden="true" />
-                  <span title={documento.nombre_original}>{documento.nombre_original}</span>
+                  <div className={estilos.textos}>
+                    <span className={estilos.titulo} title={documento.nombre_original}>
+                      {documento.nombre_original}
+                    </span>
+                    <Detalle documento={documento} />
+                  </div>
                 </div>
               </td>
               <td className={`${estilos.derecha} ${estilos.paginas} num`}>
@@ -39,6 +60,17 @@ export default function TablaDocumentos({ documentos, abriendo, onAbrir, onBorra
                 <EstadoDocumento estado={documento.estado} />
               </td>
               <td className={estilos.acciones}>
+                {documento.estado === "error" && (
+                  <button
+                    className="boton boton-fantasma boton-chico"
+                    type="button"
+                    onClick={() => onReintentar(documento)}
+                    disabled={reintentando === documento.id}
+                    aria-label={`Reintentar el procesamiento de ${documento.nombre_original}`}
+                  >
+                    {reintentando === documento.id ? "Reintentando…" : "Reintentar"}
+                  </button>
+                )}
                 <button
                   className="boton boton-fantasma boton-chico"
                   type="button"

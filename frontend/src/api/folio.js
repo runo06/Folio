@@ -41,6 +41,8 @@ export const documentos = {
 
   borrar: (id) => cliente.delete(`/documentos/${id}/`),
 
+  reprocesar: (id) => cliente.post(`/documentos/${id}/reprocesar/`).then((r) => r.data),
+
   // El PDF se descarga como "blob" (datos binarios) con el token en la
   // cabecera. Un enlace normal <a href> no podría mandar ese token.
   descargar: (id) =>
