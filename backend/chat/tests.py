@@ -320,3 +320,66 @@ class ChatTests(BaseTests):
         datos = self.client.get(reverse("conversacion-detail", args=[id_conversacion])).data
         self.assertEqual([m["rol"] for m in datos["mensajes"]], ["usuario", "asistente"])
         self.assertEqual(datos["mensajes"][1]["citas"][0]["pagina"], 4)
+
+
+class HistorialTests(BaseTests):
+    def setUp(self):
+        super().setUp()
+        self.coleccion = Coleccion.objects.create(propietario=self.ana, nombre="Tesis")
+        self.otra = Coleccion.objects.create(propietario=self.ana, nombre="Contratos")
+        self.vieja = self.conversacion(self.coleccion, "Primera", mensajes=2)
+        self.nueva = self.conversacion(self.coleccion, "Segunda", mensajes=4)
+        self.conversacion(self.otra, "De otra colección")
+
+    def conversacion(self, coleccion, titulo, mensajes=0):
+        conversacion = Conversacion.objects.create(coleccion=coleccion, titulo=titulo)
+        for i in range(mensajes):
+            Mensaje.objects.create(conversacion=conversacion, rol="usuario" if i % 2 == 0 else "asistente", contenido="x")
+        return conversacion
+
+    def test_lista_solo_de_esa_coleccion_la_mas_reciente_primero(self):
+        datos = self.client.get(reverse("coleccion-conversaciones", args=[self.coleccion.pk])).data
+        self.assertEqual([c["titulo"] for c in datos], ["Segunda", "Primera"])
+        self.assertEqual(datos[0]["total_mensajes"], 4)
+
+    def test_renombrar(self):
+        url = reverse("conversacion-detail", args=[self.vieja.pk])
+        respuesta = self.client.patch(url, {"titulo": "  Metodología  "}, format="json")
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data["titulo"], "Metodología")
+        self.assertEqual(respuesta.data["id"], self.vieja.pk)
+
+    def test_titulo_vacio_o_muy_largo(self):
+        url = reverse("conversacion-detail", args=[self.vieja.pk])
+        for titulo in ["   ", "x" * 121]:
+            respuesta = self.client.patch(url, {"titulo": titulo}, format="json")
+            self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_borrar_conversacion_borra_sus_mensajes(self):
+        respuesta = self.client.delete(reverse("conversacion-detail", args=[self.nueva.pk]))
+        self.assertEqual(respuesta.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Mensaje.objects.filter(conversacion_id=self.nueva.pk).exists())
+        self.assertTrue(Conversacion.objects.filter(pk=self.vieja.pk).exists())
+
+    def test_borrar_coleccion_borra_sus_conversaciones(self):
+        self.client.delete(reverse("coleccion-detail", args=[self.coleccion.pk]))
+        self.assertFalse(Conversacion.objects.filter(coleccion_id=self.coleccion.pk).exists())
+        self.assertFalse(Mensaje.objects.filter(conversacion__coleccion_id=self.coleccion.pk).exists())
+
+    def test_nadie_mas_puede_ver_renombrar_ni_borrar(self):
+        self.como(self.beto)
+        lista = self.client.get(reverse("coleccion-conversaciones", args=[self.coleccion.pk]))
+        self.assertEqual(lista.status_code, status.HTTP_404_NOT_FOUND)
+        url = reverse("conversacion-detail", args=[self.vieja.pk])
+        self.assertEqual(self.client.get(url).status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.patch(url, {"titulo": "Mía"}, format="json").status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.delete(url).status_code, status.HTTP_404_NOT_FOUND)
+        self.vieja.refresh_from_db()
+        self.assertEqual(self.vieja.titulo, "Primera")
+
+    def test_no_se_puede_cambiar_de_coleccion_al_renombrar(self):
+        url = reverse("conversacion-detail", args=[self.vieja.pk])
+        self.client.patch(url, {"titulo": "Otro", "coleccion": self.otra.pk}, format="json")
+        self.vieja.refresh_from_db()
+        self.assertEqual(self.vieja.coleccion_id, self.coleccion.pk)
+

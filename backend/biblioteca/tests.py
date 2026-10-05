@@ -69,6 +69,12 @@ class ColeccionTests(BaseTests):
         self.assertEqual(len(lista), 1)
         self.assertEqual(lista[0]["total_documentos"], 0)
 
+    def test_lista_la_mas_reciente_primero(self):
+        Coleccion.objects.create(propietario=self.ana, nombre="Vieja")
+        Coleccion.objects.create(propietario=self.ana, nombre="Nueva")
+        nombres = [c["nombre"] for c in self.client.get(reverse("coleccion-list")).data]
+        self.assertEqual(nombres, ["Nueva", "Vieja"])
+
     def test_requiere_sesion(self):
         self.client.force_authenticate(None)
         self.assertEqual(self.client.get(reverse("coleccion-list")).status_code, status.HTTP_401_UNAUTHORIZED)

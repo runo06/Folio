@@ -1,15 +1,23 @@
 import json
 
+from django.db.models import Count
 from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from biblioteca.models import Coleccion
 
 from .models import Conversacion, Mensaje
 from .respuesta import responder
-from .serializers import ConversacionSerializer, PreguntaSerializer
+from .serializers import (
+    ConversacionListaSerializer,
+    ConversacionResumenSerializer,
+    ConversacionSerializer,
+    PreguntaSerializer,
+    RenombrarConversacionSerializer,
+)
 
 LARGO_TITULO = 80
 
@@ -61,8 +69,30 @@ class PreguntarVista(APIView):
         return respuesta
 
 
-class ConversacionVista(generics.RetrieveAPIView):
-    serializer_class = ConversacionSerializer
+class ConversacionesDeColeccionVista(generics.ListAPIView):
+    """GET /api/colecciones/<id>/conversaciones/  -> historial, la más reciente primero"""
+
+    serializer_class = ConversacionListaSerializer
+
+    def get_queryset(self):
+        coleccion = get_object_or_404(Coleccion, pk=self.kwargs["pk"], propietario=self.request.user)
+        # Con Count() Django agrupa, y en consultas agrupadas ignora Meta.ordering:
+        # por eso el orden va explícito
+        return coleccion.conversaciones.annotate(total_mensajes=Count("mensajes")).order_by("-actualizada", "-id")
+
+
+class ConversacionVista(generics.RetrieveUpdateDestroyAPIView):
+    """Ver (con mensajes), renombrar (PATCH {titulo}) y borrar una conversación propia."""
+
+    http_method_names = ["get", "patch", "delete", "head", "options"]
 
     def get_queryset(self):
         return Conversacion.objects.filter(coleccion__propietario=self.request.user).prefetch_related("mensajes")
+
+    def get_serializer_class(self):
+        return RenombrarConversacionSerializer if self.request.method == "PATCH" else ConversacionSerializer
+
+    def update(self, request, *args, **kwargs):
+        super().update(request, *args, **kwargs)
+        # Respondemos con el resumen (id, título, fechas), no solo con el título
+        return Response(ConversacionResumenSerializer(self.get_object()).data)

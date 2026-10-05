@@ -9,7 +9,10 @@
 import cliente, { obtenerTokenAcceso, renovarSesion } from "./cliente";
 
 export const conversaciones = {
+  listar: (idColeccion) => cliente.get(`/colecciones/${idColeccion}/conversaciones/`).then((r) => r.data),
   obtener: (id) => cliente.get(`/conversaciones/${id}/`).then((r) => r.data),
+  renombrar: (id, titulo) => cliente.patch(`/conversaciones/${id}/`, { titulo }).then((r) => r.data),
+  borrar: (id) => cliente.delete(`/conversaciones/${id}/`),
 };
 
 // Un evento SSE es un bloque de líneas "event: x" y "data: {...}"

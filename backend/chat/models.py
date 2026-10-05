@@ -14,7 +14,8 @@ class Conversacion(models.Model):
     class Meta:
         verbose_name = "conversación"
         verbose_name_plural = "conversaciones"
-        ordering = ["-actualizada"]
+        # El id desempata si dos se actualizaron en el mismo instante
+        ordering = ["-actualizada", "-id"]
 
     def __str__(self):
         return self.titulo

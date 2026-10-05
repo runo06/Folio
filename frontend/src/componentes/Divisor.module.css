@@ -1,0 +1,42 @@
+.divisor {
+  position: relative;
+  width: 9px;
+  margin: 0 -4px; /* el área para agarrar es más ancha que la línea que se ve */
+  z-index: 3;
+  cursor: col-resize;
+  touch-action: none;
+  display: grid;
+  place-items: center;
+}
+
+.divisor::before {
+  content: "";
+  position: absolute;
+  inset: 0 4px;
+  background: var(--borde-suave);
+  transition: background-color 0.15s;
+}
+
+.divisor:hover::before,
+.divisor:focus-visible::before,
+.divisor:active::before {
+  background: var(--verde-fuerte);
+}
+
+.divisor:focus-visible {
+  outline: none;
+}
+
+.asa {
+  position: relative;
+  width: 5px;
+  height: 36px;
+  border-radius: 3px;
+  background: var(--borde);
+  transition: background-color 0.15s;
+}
+
+.divisor:hover .asa,
+.divisor:active .asa {
+  background: var(--verde);
+}

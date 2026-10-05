@@ -37,6 +37,8 @@ class ColeccionViewSet(viewsets.ModelViewSet):
             .prefetch_related(
                 Prefetch("documentos", queryset=Documento.objects.only("id", "coleccion_id", "num_paginas"))
             )
+            # Las consultas agrupadas (Count/Sum) ignoran Meta.ordering
+            .order_by("-actualizada", "-id")
         )
 
     def perform_create(self, serializer):

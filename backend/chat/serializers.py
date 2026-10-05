@@ -17,6 +17,26 @@ class ConversacionResumenSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class ConversacionListaSerializer(ConversacionResumenSerializer):
+    total_mensajes = serializers.IntegerField(read_only=True)
+
+    class Meta(ConversacionResumenSerializer.Meta):
+        fields = [*ConversacionResumenSerializer.Meta.fields, "total_mensajes"]
+        read_only_fields = fields
+
+
+class RenombrarConversacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Conversacion
+        fields = ["titulo"]
+
+    def validate_titulo(self, valor):
+        valor = valor.strip()
+        if not valor:
+            raise serializers.ValidationError("El título no puede estar vacío.")
+        return valor
+
+
 class ConversacionSerializer(ConversacionResumenSerializer):
     mensajes = MensajeSerializer(many=True, read_only=True)
 

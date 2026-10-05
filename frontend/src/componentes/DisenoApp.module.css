@@ -75,6 +75,23 @@
   padding: 40px 24px 96px;
 }
 
+/* Pantalla completa (chat): cabecera arriba y el resto del alto para la página.
+   100dvh = alto real visible, también en celulares con barra del navegador */
+.aplicacion {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.aplicacion .interior {
+  max-width: none;
+}
+
+.principalCompleto {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .cargando {
   min-height: 100vh;
   display: grid;
