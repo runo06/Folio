@@ -5,6 +5,7 @@
 */
 import { Navigate, Route, Routes } from "react-router";
 import DisenoApp from "./componentes/DisenoApp";
+import Chat from "./paginas/Chat";
 import Coleccion from "./paginas/Coleccion";
 import Colecciones from "./paginas/Colecciones";
 import Entrar from "./paginas/Entrar";
@@ -20,6 +21,7 @@ export default function App() {
       <Route element={<DisenoApp />}>
         <Route path="/colecciones" element={<Colecciones />} />
         <Route path="/colecciones/:id" element={<Coleccion />} />
+        <Route path="/colecciones/:id/chat" element={<Chat />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/colecciones" replace />} />

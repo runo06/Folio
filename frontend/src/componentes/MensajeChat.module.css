@@ -1,0 +1,93 @@
+.pregunta {
+  justify-self: end;
+  max-width: min(85%, 60ch);
+  background: var(--superficie-alta);
+  border: 1px solid var(--borde);
+  border-radius: 14px 14px 4px 14px;
+  padding: 10px 14px;
+  font-size: 15px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.respuesta {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+}
+
+.esperando {
+  color: var(--texto-suave);
+  font-family: var(--f-display);
+  font-style: italic;
+  font-size: 17px;
+  animation: respirar 1.6s ease-in-out infinite;
+}
+
+.sinRespuesta {
+  border-left: 2px solid var(--borde);
+  padding-left: 14px;
+  gap: 6px;
+}
+
+.sinRespuesta p {
+  font-family: var(--f-display);
+  font-size: 17px;
+  color: var(--texto-suave);
+}
+
+.nota {
+  font-size: 13px;
+  color: var(--ambar);
+}
+
+.fuentes {
+  display: grid;
+  gap: 8px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font: 500 12.5px/1.2 var(--f-texto);
+  color: var(--verde);
+  background: var(--verde-velo);
+  border: 1px solid rgba(124, 199, 156, 0.25);
+  padding: 5px 9px;
+  border-radius: 4px;
+  cursor: pointer;
+  max-width: 100%;
+  text-align: left;
+}
+
+.indice {
+  font: 500 11px/1 var(--f-mono);
+  color: var(--verde-tinta);
+  background: var(--verde);
+  border-radius: 3px;
+  padding: 2px 5px;
+  align-self: center;
+}
+
+.chip:hover {
+  border-color: var(--verde);
+}
+
+.chip :global(.num) {
+  font-size: 11.5px;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+@keyframes respirar {
+  50% {
+    opacity: 0.5;
+  }
+}

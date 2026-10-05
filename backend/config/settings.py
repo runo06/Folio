@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "cuentas",
     "biblioteca",
     "procesamiento",
+    "chat",
 ]
 
 MIDDLEWARE = [
@@ -167,6 +168,11 @@ FOLIO_EMBEDDINGS_MODELO = variable_entorno("FOLIO_EMBEDDINGS_MODELO", "gemini-em
 FOLIO_FRAGMENTO_TAMANO = int(variable_entorno("FOLIO_FRAGMENTO_TAMANO", "1200"))
 FOLIO_FRAGMENTO_SOLAPE = int(variable_entorno("FOLIO_FRAGMENTO_SOLAPE", "200"))
 
+# --- Chat ---
+FOLIO_CHAT_MODELO = variable_entorno("FOLIO_CHAT_MODELO", "gemini-3.5-flash")
+# Si el principal falla antes de empezar a escribir (saturado, límite), se usa este
+FOLIO_CHAT_MODELO_RESPALDO = variable_entorno("FOLIO_CHAT_MODELO_RESPALDO", "gemini-3.5-flash-lite")
+
 
 # --- Registros (logs) ---
 # Los errores del procesamiento se ven con: docker compose logs worker
@@ -176,6 +182,7 @@ LOGGING = {
     "handlers": {"consola": {"class": "logging.StreamHandler"}},
     "loggers": {
         "procesamiento": {"handlers": ["consola"], "level": "INFO"},
+        "chat": {"handlers": ["consola"], "level": "INFO"},
         # pypdf avisa de detalles menores de PDFs mal formados; no son errores nuestros
         "pypdf": {"handlers": ["consola"], "level": "ERROR", "propagate": False},
     },

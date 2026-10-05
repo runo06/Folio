@@ -24,6 +24,11 @@ export function guardarTokenAcceso(token) {
   tokenAcceso = token;
 }
 
+// Para las peticiones que no pasan por axios (el streaming del chat usa fetch)
+export function obtenerTokenAcceso() {
+  return tokenAcceso;
+}
+
 // El contexto de autenticación registra aquí qué hacer si la sesión muere
 export function registrarAlExpirarSesion(funcion) {
   alExpirarSesion = funcion;

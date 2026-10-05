@@ -1,0 +1,40 @@
+.compositor {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 8px 8px 8px 14px;
+  transition: border-color 0.15s;
+}
+
+.compositor:focus-within {
+  border-color: var(--verde);
+}
+
+.area {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  border: 0;
+  background: transparent;
+  color: var(--texto);
+  font: 400 15px/1.5 var(--f-texto);
+  padding: 6px 0;
+  max-height: 168px;
+}
+
+.area:focus {
+  outline: none;
+}
+
+.area::placeholder {
+  color: var(--texto-tenue);
+}
+
+.contador {
+  font-size: 12px;
+  color: var(--texto-tenue);
+  align-self: center;
+}

@@ -7,6 +7,7 @@ import FormularioColeccion from "../componentes/FormularioColeccion";
 import TablaDocumentos from "../componentes/TablaDocumentos";
 import ZonaSubida from "../componentes/ZonaSubida";
 import { useAvisos } from "../contexto/AvisosContexto";
+import { abrirPdf, olvidarPdf } from "../utilidades/abrirPdf";
 import { mensajeDeError, plural } from "../utilidades/formato";
 import estilos from "./Coleccion.module.css";
 
@@ -171,20 +172,10 @@ export default function Coleccion() {
 
   // ---------- Abrir un PDF ----------
   async function abrir(documento) {
-    // Abrimos la pestaña YA, durante el clic. Si la abriéramos después de
-    // descargar, el navegador la bloquearía como ventana emergente.
-    const pestana = window.open("", "_blank");
-    if (pestana) pestana.document.title = "Abriendo PDF…";
     setAbriendo(documento.id);
     try {
-      const blob = await apiDocumentos.descargar(documento.id);
-      // createObjectURL crea una URL temporal (blob:...) para datos en memoria
-      const url = URL.createObjectURL(blob);
-      if (pestana) pestana.location.href = url;
-      else window.location.href = url;
-      setTimeout(() => URL.revokeObjectURL(url), 60_000); // libera la memoria después
+      await abrirPdf(documento.id);
     } catch (error) {
-      pestana?.close();
       avisar(mensajeDeError(error), "error");
     } finally {
       setAbriendo(null);
@@ -210,6 +201,7 @@ export default function Coleccion() {
       }
       const { documento } = porBorrar;
       await apiDocumentos.borrar(documento.id);
+      olvidarPdf(documento.id);
       setDocumentos((actuales) => actuales.filter((d) => d.id !== documento.id));
       setColeccion((actual) => ({
         ...actual,
@@ -258,6 +250,9 @@ export default function Coleccion() {
               </p>
             </div>
             <div className={estilos.botones}>
+              <Link className="boton boton-primario" to={`/colecciones/${id}/chat`}>
+                Preguntar
+              </Link>
               <button className="boton boton-secundario" type="button" onClick={() => setEditando(true)}>
                 Renombrar
               </button>

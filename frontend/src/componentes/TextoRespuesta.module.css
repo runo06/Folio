@@ -1,0 +1,60 @@
+.texto {
+  font-family: var(--f-display);
+  font-size: 17.5px;
+  line-height: 1.6;
+  display: grid;
+  gap: 12px;
+  max-width: 68ch;
+}
+
+.texto ul,
+.texto ol {
+  margin: 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 6px;
+}
+
+.texto strong {
+  font-weight: 500;
+  color: var(--texto);
+}
+
+/* Número de cita: como una nota al pie, pero se puede tocar */
+.marca {
+  display: inline-grid;
+  place-items: center;
+  min-width: 19px;
+  height: 18px;
+  padding: 0 4px;
+  margin: 0 1px;
+  vertical-align: 0.35em;
+  font: 500 11px/1 var(--f-mono);
+  color: var(--verde);
+  background: var(--verde-velo);
+  border: 1px solid rgba(124, 199, 156, 0.25);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.marca:hover {
+  border-color: var(--verde);
+}
+
+/* Cursor que parpadea mientras la respuesta se escribe */
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -0.12em;
+  background: var(--verde);
+  border-radius: 1px;
+  animation: parpadeo 1s steps(2, start) infinite;
+}
+
+@keyframes parpadeo {
+  to {
+    visibility: hidden;
+  }
+}
