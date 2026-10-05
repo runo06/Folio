@@ -1,0 +1,103 @@
+.cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(14, 18, 16, 0.86);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--borde-suave);
+}
+
+.interior {
+  max-width: var(--ancho-max);
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.nav {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.nav a {
+  color: var(--texto-suave);
+  text-decoration: none;
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: var(--radio-chico);
+}
+
+.nav a:hover {
+  color: var(--texto);
+}
+
+/* NavLink agrega la clase "active" cuando la URL coincide */
+.nav a:global(.active) {
+  color: var(--texto);
+  background: var(--superficie-alta);
+}
+
+.usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--texto-suave);
+  min-width: 0;
+}
+
+.nombre {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 22ch;
+}
+
+.avatar {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--superficie-alta);
+  border: 1px solid var(--borde);
+  font: 500 12px var(--f-texto);
+  color: var(--verde);
+}
+
+.principal {
+  max-width: var(--ancho-max);
+  margin: 0 auto;
+  padding: 40px 24px 96px;
+}
+
+.cargando {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: var(--texto-suave);
+  font-family: var(--f-display);
+  font-size: 20px;
+  font-style: italic;
+}
+
+@media (max-width: 560px) {
+  .interior {
+    padding: 10px 16px;
+    gap: 12px;
+  }
+  .nav,
+  .nombre {
+    display: none;
+  }
+  .usuario {
+    margin-left: auto;
+  }
+  .principal {
+    padding: 24px 16px 80px;
+  }
+}

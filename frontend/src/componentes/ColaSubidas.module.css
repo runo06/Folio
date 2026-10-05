@@ -1,0 +1,57 @@
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.subida {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  align-items: center;
+  background: var(--superficie);
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-chico);
+  padding: 12px 14px;
+}
+
+.nombre {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dato {
+  font-size: 12.5px;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+.barra {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--borde-suave);
+  overflow: hidden;
+}
+
+.barra i {
+  display: block;
+  height: 100%;
+  background: var(--verde);
+  border-radius: inherit;
+  transition: width 0.2s ease-out;
+}
+
+.rechazada {
+  border-color: rgba(226, 133, 117, 0.3);
+}
+
+.motivo {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  color: var(--rojo);
+}

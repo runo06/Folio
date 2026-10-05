@@ -1,0 +1,57 @@
+.encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.encabezado h1 {
+  font-size: clamp(30px, 4vw, 40px);
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+}
+
+.resumen {
+  color: var(--texto-suave);
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.nueva {
+  background: var(--superficie-alta);
+  border: 1px solid var(--verde);
+  border-radius: var(--radio);
+  padding: 20px;
+}
+
+.vacio {
+  border: 1px dashed var(--borde);
+  border-radius: var(--radio);
+  padding: 48px 24px;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.vacio h2 {
+  font-size: 26px;
+}
+
+.vacio p {
+  color: var(--texto-suave);
+  max-width: 54ch;
+  margin-bottom: 8px;
+}
+
+.cargando {
+  color: var(--texto-suave);
+}

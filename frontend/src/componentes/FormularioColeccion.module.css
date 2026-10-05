@@ -1,0 +1,10 @@
+.formulario {
+  display: grid;
+  gap: 14px;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

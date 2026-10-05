@@ -1,0 +1,30 @@
+.estante {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 30px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.estante i {
+  display: block;
+  flex: none;
+  background: var(--borde);
+  border-radius: 1px;
+}
+
+.estante i:nth-child(3n + 1) {
+  background: #33413a;
+}
+
+.estante i:nth-child(4n + 2) {
+  background: var(--verde-fuerte);
+  opacity: 0.7;
+}
+
+.vacio {
+  height: 30px;
+  width: 48px;
+  border-bottom: 2px solid var(--borde);
+}

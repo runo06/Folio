@@ -1,0 +1,44 @@
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 500 12px/1 var(--f-texto);
+  padding: 5px 9px 5px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+  color: var(--texto-suave);
+  background: rgba(154, 167, 159, 0.1);
+}
+
+.estado::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.listo {
+  color: var(--verde);
+  background: var(--verde-velo);
+}
+
+.procesando {
+  color: var(--ambar);
+  background: var(--ambar-velo);
+}
+
+.procesando::before {
+  animation: latido 1.2s ease-in-out infinite;
+}
+
+.error {
+  color: var(--rojo);
+  background: var(--rojo-velo);
+}
+
+@keyframes latido {
+  50% {
+    opacity: 0.25;
+  }
+}

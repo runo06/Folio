@@ -1,0 +1,151 @@
+.marco {
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla th {
+  background: var(--superficie);
+  font: 400 11px var(--f-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+  text-align: left;
+  padding: 10px 16px;
+}
+
+.tabla td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--borde-suave);
+  vertical-align: middle;
+}
+
+.tabla tbody tr:hover {
+  background: var(--superficie);
+}
+
+.derecha {
+  text-align: right !important;
+}
+
+/* width:100% + max-width:0 hace que la columna del nombre ocupe el espacio
+   sobrante y que un nombre largo se corte con "…" en vez de ensanchar la tabla */
+.celdaNombre {
+  width: 100%;
+  max-width: 0;
+}
+
+.nombre {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.nombre span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icono {
+  flex: none;
+  width: 26px;
+  height: 32px;
+  border-radius: 3px;
+  position: relative;
+  background: var(--superficie-alta);
+  border: 1px solid var(--borde);
+}
+
+.icono::after {
+  content: "PDF";
+  position: absolute;
+  bottom: 3px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font: 600 7px/1 var(--f-mono);
+  color: var(--texto-tenue);
+}
+
+.paginas,
+.tamano,
+.fecha {
+  color: var(--texto-suave);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.unidad {
+  display: none;
+}
+
+.acciones {
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* En pantallas angostas la tabla se convierte en tarjetas apiladas */
+@media (max-width: 760px) {
+  .tabla,
+  .tabla tbody {
+    display: block;
+  }
+
+  .tabla thead {
+    display: none;
+  }
+
+  .tabla tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "nombre estado"
+      "paginas acciones";
+    gap: 6px 12px;
+    padding: 14px;
+    border-top: 1px solid var(--borde-suave);
+  }
+
+  .tabla tbody tr:first-child {
+    border-top: 0;
+  }
+
+  .tabla td {
+    padding: 0;
+    border: 0;
+  }
+
+  .celdaNombre {
+    grid-area: nombre;
+    max-width: none;
+    min-width: 0;
+  }
+  .estado {
+    grid-area: estado;
+    justify-self: end;
+  }
+  .paginas {
+    grid-area: paginas;
+    text-align: left !important;
+    align-self: center;
+    padding-left: 38px !important;
+  }
+  .unidad {
+    display: inline;
+  }
+  .acciones {
+    grid-area: acciones;
+  }
+  .tamano,
+  .fecha {
+    display: none;
+  }
+}

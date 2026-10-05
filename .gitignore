@@ -1,0 +1,21 @@
+# Variables de entorno reales (contienen secretos)
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Archivos subidos en desarrollo
+backend/media/
+
+# Node / Vite
+node_modules/
+dist/
+
+# Editores y sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

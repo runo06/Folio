@@ -1,0 +1,5 @@
+# Saltos de línea tipo Linux (LF) en todo el repo: los archivos se ejecutan
+# dentro de contenedores Linux, donde CRLF puede romper scripts.
+* text=auto eol=lf
+*.png binary
+*.pdf binary

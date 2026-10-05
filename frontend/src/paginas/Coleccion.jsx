@@ -1,0 +1,255 @@
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import { colecciones as apiColecciones, documentos as apiDocumentos } from "../api/folio";
+import ColaSubidas from "../componentes/ColaSubidas";
+import Dialogo from "../componentes/Dialogo";
+import FormularioColeccion from "../componentes/FormularioColeccion";
+import TablaDocumentos from "../componentes/TablaDocumentos";
+import ZonaSubida from "../componentes/ZonaSubida";
+import { useAvisos } from "../contexto/AvisosContexto";
+import { mensajeDeError, plural } from "../utilidades/formato";
+import estilos from "./Coleccion.module.css";
+
+// Debe coincidir con FOLIO_TAMANO_MAXIMO_MB del backend. Revisarlo aquí
+// solo sirve para avisar al instante; el backend vuelve a validar siempre.
+const LIMITE_MB = 25;
+
+function validarAntesDeSubir(archivo) {
+  if (!archivo.name.toLowerCase().endsWith(".pdf")) return "Solo se aceptan archivos PDF.";
+  if (archivo.size > LIMITE_MB * 1024 * 1024) return `El archivo pesa más de ${LIMITE_MB} MB.`;
+  return null;
+}
+
+export default function Coleccion() {
+  // useParams lee la parte variable de la URL: /colecciones/:id
+  const { id } = useParams();
+  const navegar = useNavigate();
+  const avisar = useAvisos();
+
+  const [coleccion, setColeccion] = useState(null);
+  const [documentos, setDocumentos] = useState([]);
+  const [errorCarga, setErrorCarga] = useState(null);
+  const [editando, setEditando] = useState(false);
+  const [subidas, setSubidas] = useState([]);
+  const [abriendo, setAbriendo] = useState(null);
+  // Qué se está por borrar: { tipo: "coleccion" } o { tipo: "documento", documento }
+  const [porBorrar, setPorBorrar] = useState(null);
+  const [borrando, setBorrando] = useState(false);
+
+  const siguienteIdSubida = useRef(1);
+  // Cadena de promesas: cada subida espera a que termine la anterior,
+  // así los archivos se suben de uno en uno y en orden.
+  const colaSubidas = useRef(Promise.resolve());
+
+  // Cuando cambia el id de la URL, cargamos la colección y sus documentos
+  // en paralelo (Promise.all espera a las dos peticiones).
+  useEffect(() => {
+    let vigente = true;
+    setColeccion(null);
+    setErrorCarga(null);
+    Promise.all([apiColecciones.obtener(id), apiDocumentos.listar(id)])
+      .then(([datosColeccion, datosDocumentos]) => {
+        if (!vigente) return;
+        setColeccion(datosColeccion);
+        setDocumentos(datosDocumentos);
+      })
+      .catch((error) => {
+        if (!vigente) return;
+        setErrorCarga(
+          error.response?.status === 404 ? "Esta colección no existe o no es tuya." : mensajeDeError(error),
+        );
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [id]);
+
+  // ---------- Subidas ----------
+  function actualizarSubida(idSubida, cambios) {
+    setSubidas((actuales) => actuales.map((s) => (s.id === idSubida ? { ...s, ...cambios } : s)));
+  }
+
+  function quitarSubida(idSubida) {
+    setSubidas((actuales) => actuales.filter((s) => s.id !== idSubida));
+  }
+
+  async function subirUno(subida, archivo) {
+    actualizarSubida(subida.id, { progreso: 0 });
+    try {
+      const documento = await apiDocumentos.subir(id, archivo, (progreso) =>
+        actualizarSubida(subida.id, { progreso }),
+      );
+      quitarSubida(subida.id);
+      setDocumentos((actuales) => [documento, ...actuales]);
+      setColeccion((actual) => ({
+        ...actual,
+        total_documentos: actual.total_documentos + 1,
+        total_paginas: actual.total_paginas + documento.num_paginas,
+      }));
+      avisar(`«${documento.nombre_original}» se subió. ${plural(documento.num_paginas, "página")}.`);
+    } catch (error) {
+      actualizarSubida(subida.id, { error: mensajeDeError(error), progreso: null });
+    }
+  }
+
+  function agregarArchivos(archivos) {
+    const nuevas = archivos.map((archivo) => ({
+      archivo,
+      subida: {
+        id: siguienteIdSubida.current++,
+        nombre: archivo.name,
+        tamano: archivo.size,
+        progreso: null,
+        error: validarAntesDeSubir(archivo),
+      },
+    }));
+
+    setSubidas((actuales) => [...actuales, ...nuevas.map((n) => n.subida)]);
+
+    for (const { archivo, subida } of nuevas) {
+      if (subida.error) continue;
+      colaSubidas.current = colaSubidas.current.then(() => subirUno(subida, archivo));
+    }
+  }
+
+  // ---------- Abrir un PDF ----------
+  async function abrir(documento) {
+    // Abrimos la pestaña YA, durante el clic. Si la abriéramos después de
+    // descargar, el navegador la bloquearía como ventana emergente.
+    const pestana = window.open("", "_blank");
+    if (pestana) pestana.document.title = "Abriendo PDF…";
+    setAbriendo(documento.id);
+    try {
+      const blob = await apiDocumentos.descargar(documento.id);
+      // createObjectURL crea una URL temporal (blob:...) para datos en memoria
+      const url = URL.createObjectURL(blob);
+      if (pestana) pestana.location.href = url;
+      else window.location.href = url;
+      setTimeout(() => URL.revokeObjectURL(url), 60_000); // libera la memoria después
+    } catch (error) {
+      pestana?.close();
+      avisar(mensajeDeError(error), "error");
+    } finally {
+      setAbriendo(null);
+    }
+  }
+
+  // ---------- Renombrar y borrar ----------
+  async function renombrar(datos) {
+    const actualizada = await apiColecciones.actualizar(id, datos);
+    setColeccion(actualizada);
+    setEditando(false);
+    avisar(`Colección renombrada a «${actualizada.nombre}».`);
+  }
+
+  async function confirmarBorrado() {
+    setBorrando(true);
+    try {
+      if (porBorrar.tipo === "coleccion") {
+        await apiColecciones.borrar(id);
+        avisar(`Colección «${coleccion.nombre}» borrada.`);
+        navegar("/colecciones", { replace: true });
+        return;
+      }
+      const { documento } = porBorrar;
+      await apiDocumentos.borrar(documento.id);
+      setDocumentos((actuales) => actuales.filter((d) => d.id !== documento.id));
+      setColeccion((actual) => ({
+        ...actual,
+        total_documentos: actual.total_documentos - 1,
+        total_paginas: actual.total_paginas - documento.num_paginas,
+      }));
+      avisar(`«${documento.nombre_original}» borrado.`);
+      setPorBorrar(null);
+    } catch (error) {
+      avisar(mensajeDeError(error), "error");
+    } finally {
+      setBorrando(false);
+    }
+  }
+
+  // ---------- Dibujo ----------
+  if (errorCarga) {
+    return (
+      <div className={estilos.problema}>
+        <p className="aviso-error">{errorCarga}</p>
+        <Link to="/colecciones">← Volver a tus colecciones</Link>
+      </div>
+    );
+  }
+  if (!coleccion) return <p className={estilos.cargando}>Cargando colección…</p>;
+
+  return (
+    <>
+      <nav className={estilos.migas} aria-label="Ruta">
+        <Link to="/colecciones">Colecciones</Link>
+        <span aria-hidden="true">/</span>
+      </nav>
+
+      <div className={estilos.encabezado}>
+        {editando ? (
+          <div className={estilos.edicion}>
+            <FormularioColeccion inicial={coleccion} onGuardar={renombrar} onCancelar={() => setEditando(false)} />
+          </div>
+        ) : (
+          <>
+            <div className={estilos.titulo}>
+              <h1>{coleccion.nombre}</h1>
+              {coleccion.descripcion && <p className={estilos.descripcion}>{coleccion.descripcion}</p>}
+              <p className={`${estilos.resumen} num`}>
+                {plural(coleccion.total_documentos, "documento")} · {plural(coleccion.total_paginas, "página")}
+              </p>
+            </div>
+            <div className={estilos.botones}>
+              <button className="boton boton-secundario" type="button" onClick={() => setEditando(true)}>
+                Renombrar
+              </button>
+              <button className="boton boton-peligro" type="button" onClick={() => setPorBorrar({ tipo: "coleccion" })}>
+                Borrar colección
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className={estilos.cuerpo}>
+        <ZonaSubida limiteMb={LIMITE_MB} onArchivos={agregarArchivos} />
+        <ColaSubidas subidas={subidas} onQuitar={quitarSubida} />
+
+        {documentos.length > 0 ? (
+          <TablaDocumentos
+            documentos={documentos}
+            abriendo={abriendo}
+            onAbrir={abrir}
+            onBorrar={(documento) => setPorBorrar({ tipo: "documento", documento })}
+          />
+        ) : (
+          <p className={estilos.sinDocumentos}>Esta colección todavía no tiene documentos.</p>
+        )}
+      </div>
+
+      <Dialogo
+        abierto={Boolean(porBorrar)}
+        titulo={
+          porBorrar?.tipo === "documento"
+            ? `¿Borrar «${porBorrar.documento.nombre_original}»?`
+            : `¿Borrar «${coleccion.nombre}»?`
+        }
+        textoConfirmar={porBorrar?.tipo === "documento" ? "Borrar documento" : "Borrar colección"}
+        ocupado={borrando}
+        onConfirmar={confirmarBorrado}
+        onCancelar={() => setPorBorrar(null)}
+      >
+        <p>
+          {porBorrar?.tipo === "coleccion" && coleccion.total_documentos > 0 && (
+            <>
+              Se borrarán también sus <span className="num">{plural(coleccion.total_documentos, "documento")}</span> (
+              <span className="num">{coleccion.total_paginas}</span> páginas).{" "}
+            </>
+          )}
+          Esta acción no se puede deshacer.
+        </p>
+      </Dialogo>
+    </>
+  );
+}

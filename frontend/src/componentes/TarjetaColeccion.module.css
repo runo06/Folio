@@ -1,0 +1,84 @@
+.tarjeta {
+  position: relative;
+  background: var(--superficie);
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio);
+  padding: 20px;
+  display: grid;
+  gap: 18px;
+  grid-template-rows: 1fr auto auto;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.tarjeta:not(.editando):hover {
+  border-color: var(--borde);
+  background: var(--superficie-alta);
+}
+
+.editando {
+  border-color: var(--verde);
+  background: var(--superficie-alta);
+}
+
+.titulo {
+  font-size: 21px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.enlace {
+  color: var(--texto);
+  text-decoration: none;
+}
+
+/* Truco del "enlace estirado": su ::after cubre toda la tarjeta, así que
+   un clic en cualquier parte abre la colección. Los botones quedan por
+   encima gracias a position + z-index. */
+.enlace::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.enlace:focus-visible {
+  outline: none;
+}
+.enlace:focus-visible::after {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
+.descripcion {
+  color: var(--texto-suave);
+  font-size: 14px;
+  margin-top: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.datos {
+  font-size: 12.5px;
+  color: var(--texto-tenue);
+  white-space: nowrap;
+}
+
+.acciones {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 4px;
+  border-top: 1px solid var(--borde-suave);
+  padding-top: 10px;
+  margin: -6px -10px -10px;
+  padding-inline: 0;
+}

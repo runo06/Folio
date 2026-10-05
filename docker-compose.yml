@@ -1,0 +1,60 @@
+# Orquesta los servicios de Folio en desarrollo.
+# Uso: docker compose up --build
+services:
+  # Base de datos: PostgreSQL 17 con la extensión pgvector ya instalada
+  # (la usaremos en la fase 2 para buscar fragmentos por significado).
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - datos_postgres:/var/lib/postgresql/data
+    healthcheck:
+      # "$$" escapa el "$" para que la variable la resuelva el contenedor
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # API de Django
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db # dentro de la red de Docker, la base se llama "db"
+    volumes:
+      - ./backend:/app # tu código, montado: los cambios se ven al instante
+      - archivos_subidos:/app/media # los PDF viven en un volumen aparte
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy # espera a que PostgreSQL acepte conexiones
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # Interfaz en React, servida por Vite en modo desarrollo
+  frontend:
+    build: ./frontend
+    environment:
+      # Vite reenvía las peticiones /api a este servicio (ver vite.config.js)
+      VITE_API_DESTINO: http://backend:8000
+      # En Windows, Docker no avisa de cambios en archivos montados;
+      # con "polling" Vite los revisa cada cierto tiempo.
+      VITE_USAR_POLLING: "true"
+    volumes:
+      - ./frontend:/app
+      # Volumen anónimo: conserva los node_modules instalados DENTRO del
+      # contenedor, para que la carpeta montada de arriba no los tape.
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  datos_postgres:
+  archivos_subidos:

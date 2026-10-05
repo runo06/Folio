@@ -1,0 +1,33 @@
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--texto);
+}
+
+.hoja {
+  width: 22px;
+  height: 28px;
+  position: relative;
+  background: var(--verde);
+  clip-path: polygon(0 0, 68% 0, 100% 24%, 100% 100%, 0 100%);
+}
+
+.hoja::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 32%;
+  height: 24%;
+  background: var(--verde-fuerte);
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+
+.nombre {
+  font-family: var(--f-display);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}

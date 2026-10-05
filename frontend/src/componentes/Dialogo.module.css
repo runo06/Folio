@@ -1,0 +1,45 @@
+.dialogo {
+  width: min(440px, calc(100vw - 32px));
+  background: var(--superficie-alta);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.7);
+}
+
+.dialogo[open] {
+  display: grid;
+  gap: 14px;
+  animation: aparecer 0.15s ease-out;
+}
+
+/* ::backdrop es el fondo oscuro que pone el navegador detrás del diálogo */
+.dialogo::backdrop {
+  background: rgba(8, 10, 9, 0.72);
+}
+
+.titulo {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.cuerpo {
+  color: var(--texto-suave);
+  font-size: 14.5px;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
